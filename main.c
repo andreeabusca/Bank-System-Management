@@ -3,8 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_RECORDS 100
-#define MAX_FIELD_LENGTH 1024
 
 // Structure to represent an account
 struct Account {
@@ -15,8 +13,12 @@ struct Account {
     int amount;
 };
 
+
+//File handling functions
+
 // Function to read data from a CSV file
 void readFromCSV(const char *filePath, struct Account accounts[], int *count) {
+    
     FILE *file = fopen(filePath, "r");
     if (file == NULL) {
         perror("Error opening file");
@@ -27,7 +29,7 @@ void readFromCSV(const char *filePath, struct Account accounts[], int *count) {
     fgets(line, sizeof(line), file); // Read header line (if any), assuming the first line contains headers
 
     int i = 0;
-    while (fgets(line, sizeof(line), file) && i < 1024) {
+    while (fgets(line, sizeof(line), file) && i < 900) {
         // Split the line into fields
         char *token = strtok(line, ",");
         if (token != NULL) {
@@ -51,6 +53,7 @@ void readFromCSV(const char *filePath, struct Account accounts[], int *count) {
             }
         }
     }
+    
     *count = i;
 
     fclose(file);
@@ -58,6 +61,7 @@ void readFromCSV(const char *filePath, struct Account accounts[], int *count) {
 
 // Function to write data to a CSV file
 void writeToCSV(const char *filePath, struct Account accounts[], int count) {
+    
     FILE *file = fopen(filePath, "w");
     if (file == NULL) {
         perror("Error opening file");
@@ -75,27 +79,37 @@ void writeToCSV(const char *filePath, struct Account accounts[], int count) {
     fclose(file);
 }
 
+
+//Functionalities
+
 // Function to convert string to uppercase
 void toUpper(char *str) {
+    
     while (*str) {
         *str = toupper(*str);
         str++;
     }
 }
 
+// Function to check if input contains only letters, used for login function
 int isOnlyAlpha(const char *argmnt){
+    
     while (*argmnt) {
         if (!isalpha(*argmnt)) {
             return 0; // Not a letter
         }
         argmnt++;
     }
+    
     return 1; // All characters are letters
 }
+
+//Function login checks if arg[2] and arg[3], the name and surname of the user, contain only letters
 int login(char *name, char *surname) {
-    // Convert username and password to uppercase for case-insensitive comparison
+    
     toUpper(name);
     toUpper(surname);
+    
     if(isOnlyAlpha(name) && isOnlyAlpha(surname)){
         return 1;
     }else{
@@ -103,7 +117,9 @@ int login(char *name, char *surname) {
     }
 }
 
+// Function to memorize all the locations of a user's accounts in the accounts array 
 void getAccounts(struct Account accounts[], int count, char name[], char surname[], int positions[], int *numMatches) {
+    
     *numMatches = 0; // Initialize the number of matches
 
     for (int i = 0; i < count; i++) {
@@ -115,8 +131,11 @@ void getAccounts(struct Account accounts[], int count, char name[], char surname
     }
 }
 
+//Function to display user's accounts
 void displayAccounts(struct Account accounts[], int numMatches, int positions[]) {
+    
     printf("Your accounts:\n");
+    
     for (int i = 0; i < numMatches; i++) {
         int pos = positions[i];
         printf("Account %d:", i + 1);
@@ -127,11 +146,13 @@ void displayAccounts(struct Account accounts[], int numMatches, int positions[])
         printf("\n");
     }
 }
+
 // Function to edit an account
 void editAccount(struct Account accounts[], int count,int numMatches, int positions[]) {
+    
     char IBAN[34];
     printf("Enter the IBAN of the account you want to edit: ");
-    scanf("%s", IBAN);
+    scanf("%s", IBAN); //IBAN of the account user wants to edit
 
     for (int i = 0; i < numMatches; i++) {
         int pos = positions[i];
@@ -140,7 +161,9 @@ void editAccount(struct Account accounts[], int count,int numMatches, int positi
             char temp_IBAN[34];
             printf("Enter new IBAN: ");
             scanf("%s",&temp_IBAN);
+            
             toUpper(temp_IBAN);
+            
             int ok = 1;
             for(int i = 0; i < count; i++){
                 if(strcmp(temp_IBAN,accounts[i].IBAN) == 0){
@@ -152,24 +175,29 @@ void editAccount(struct Account accounts[], int count,int numMatches, int positi
                 strcpy(accounts[pos].IBAN,temp_IBAN);
             }else{
                 printf("IBAN could not be changed!\n");
-            }
+            }//IBAN is changed only if the new IBAN isn't already used for another account
+            
             printf("Enter new amount: ");
             scanf("%d", &accounts[pos].amount);
+            
             printf("Enter new coin: ");
             scanf("%s", accounts[pos].coin);
             toUpper(accounts[pos].coin);
+            
             printf("Account edited successfully.\n");
             return;
         }
     }
+    
     printf("Account not found.\n");
 }
 
 // Function to delete an account
 void deleteAccount(struct Account accounts[], int *count) {
+    
     char IBAN[34];
     printf("Enter the IBAN of the account you want to delete: ");
-    scanf("%s", IBAN);
+    scanf("%s", IBAN);//IBAN of the account user wants to delete
 
     for (int i = 0; i < *count; i++) {
         if (strcmp(IBAN, accounts[i].IBAN) == 0) {
@@ -182,10 +210,13 @@ void deleteAccount(struct Account accounts[], int *count) {
             return;
         }
     }
+    
     printf("Account not found.\n");
 }
 
+//Function to create a new account
 void createAccount(struct Account accounts[], int *count,int *numMatches,int positions[]) {
+    
     if (*count >= 100) {
         printf("Maximum number of accounts reached.\n");
         return;
@@ -208,7 +239,7 @@ void createAccount(struct Account accounts[], int *count,int *numMatches,int pos
             printf("Invalid IBAN! Couldn't create new account!");
             return;
         }
-    }
+    }//Account is created only if IBAN of the new account isn't already used for another account
     strcpy(accounts[*count].IBAN,temp_IBAN);
 
     printf("Enter coin: ");
@@ -217,6 +248,7 @@ void createAccount(struct Account accounts[], int *count,int *numMatches,int pos
 
     printf("Enter amount: ");
     scanf("%d", &accounts[*count].amount);
+    
     positions[*numMatches] = *count;
     (*count)++;
     (*numMatches)++;
@@ -224,10 +256,12 @@ void createAccount(struct Account accounts[], int *count,int *numMatches,int pos
 
 // Function to view account data
 void viewAccount(struct Account accounts[], int count, int numMatches, int positions[]) {
+    
     char IBAN[34];
     printf("Enter the IBAN of the account you want to view: ");
     scanf("%s", IBAN);
     toUpper(IBAN);
+    
     for (int i = 0; i < numMatches; i++) {
         int pos = positions[i];
         if (strcmp(IBAN, accounts[pos].IBAN) == 0) {
@@ -239,22 +273,29 @@ void viewAccount(struct Account accounts[], int count, int numMatches, int posit
             return;
         }
     }
+    
     printf("Account not found.\n");
 }
 
+//Function to convert currency used for transaction function
 void convertCurrency(char sourceCoin[],char destCoin[], int *amount){
+    
     if(strcmp(sourceCoin,"LEI") == 0 && strcmp(destCoin,"EUR") == 0){
         *amount = *amount / 5;
     }
+    
     if(strcmp(sourceCoin,"LEI") == 0 && strcmp(destCoin,"DOL") == 0){
         *amount = *amount / 5;
     }
+    
     if(strcmp(sourceCoin,"LEI") == 0 && strcmp(destCoin,"GBP") == 0){
         *amount = *amount / 6;
     }
+    
     if(strcmp(sourceCoin,"DOL") == 0 && strcmp(destCoin,"LEI") == 0){
         *amount = *amount * 5;
     }
+    
     if(strcmp(sourceCoin,"GBP") == 0 && strcmp(destCoin,"LEI") == 0){
         *amount = *amount * 6;
     }
@@ -262,6 +303,7 @@ void convertCurrency(char sourceCoin[],char destCoin[], int *amount){
 
 // Function to perform transactions
 void performTransactions(struct Account accounts[], int count,int numMathces,int positions[]) {
+    
     char sourceIBAN[34], destIBAN[34];
     int sourceIndex, destIndex;
     int amount;
@@ -281,7 +323,8 @@ void performTransactions(struct Account accounts[], int count,int numMathces,int
     if(ok == 0){
         printf("You do not have access to this account!");
         return;
-    }
+    }//Transaction is performed only if the user is the owner of the source account
+    
     printf("Enter destination IBAN: ");
     scanf("%s", destIBAN);
     toUpper(destIBAN);
@@ -296,7 +339,8 @@ void performTransactions(struct Account accounts[], int count,int numMathces,int
     if(ok == 0){
         printf("This account does not exist!");
         return;
-    }
+    }//Transaction is performed only if the destination account exists
+    
     printf("Enter amount: ");
     scanf("%d", &amount);
 
@@ -342,12 +386,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct Account accounts[MAX_RECORDS];
+    struct Account accounts[900];
     int numAccounts = 0;
     readFromCSV("accounts.csv", accounts, &numAccounts);
     int positions[100], numMatches = 0;
     getAccounts(accounts,numAccounts,argv[2],argv[3],positions,&numMatches);
     int choice;
+    
     do {
         displayMenu();
         printf("\nEnter your choice: ");
